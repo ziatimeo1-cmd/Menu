@@ -65,7 +65,7 @@ button{font:inherit;color:inherit}
 .title span{color:var(--red);white-space:nowrap}
 
 .meta{display:flex;flex-wrap:wrap;align-items:flex-end;gap:4px 14px;font-size:14px}
-.meta-week{flex:1 1 210px;display:flex;align-items:flex-end;gap:8px;min-width:0}
+.meta-week{display:flex;align-items:flex-end;gap:6px;min-width:0}
 .meta-week b{font-weight:600;white-space:nowrap;line-height:var(--lh)}
 .meta-people{display:flex;align-items:flex-end;gap:5px;white-space:nowrap;line-height:var(--lh);margin-left:auto}
 
@@ -74,14 +74,16 @@ button{font:inherit;color:inherit}
   background:transparent var(--dash) repeat-x 0 0;font:16px/var(--lh) var(--hand);color:var(--ink);height:var(--lh);min-width:0}
 .line::placeholder{color:var(--faint);opacity:1}
 .line:focus{background-color:rgba(194,91,87,.07)}
-.week-input{flex:1}
-.people-input{width:2.6ch;text-align:center;padding:0}
+.pick{position:relative;display:inline-block}
+.pick::after{content:"";position:absolute;right:7px;top:9px;width:7px;height:7px;border-right:2px solid var(--red);border-bottom:2px solid var(--red);transform:rotate(45deg);pointer-events:none}
+.sel{-webkit-appearance:none;appearance:none;border:0;border-radius:0;margin:0;outline:0;background:transparent var(--dash) repeat-x 0 0;font:16px/var(--lh) var(--hand);color:var(--ink);height:var(--lh);padding:0 24px 0 4px;cursor:pointer}
+.sel:focus{background-color:rgba(194,91,87,.07)}
 textarea.line{display:block;width:100%;resize:none;overflow:hidden;background-repeat:repeat;min-height:var(--lh)}
 
 /* Cartes */
 .days,.cats{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;margin-top:18px}
 .days>*,.cats>*{min-width:0}
-.add-input,.item-text,.week-input{width:100%}
+.add-input,.item-text{width:100%}
 @media (min-width:640px){
   .days,.cats{grid-template-columns:repeat(2,minmax(0,1fr))}
   .day--sun{grid-column:1/-1}
@@ -235,8 +237,8 @@ textarea.line{display:block;width:100%;resize:none;overflow:hidden;background-re
     <div class="deco" data-deco="menu" aria-hidden="true"></div>
     <h1 class="title">Au menu <span>cette semaine</span></h1>
     <div class="meta">
-      <label class="meta-week"><b>Semaine du</b><input class="line week-input" type="text" autocomplete="off" enterkeyhint="done" placeholder="date"></label>
-      <label class="meta-people">Pour <input class="line people-input" type="text" inputmode="numeric" maxlength="2" enterkeyhint="done" aria-label="Nombre de personnes"> <span>personne<span class="pl">s</span></span></label>
+      <div class="meta-week"><b>Semaine du</b><span class="pick"><select class="sel week-day" aria-label="Jour"></select></span><span class="pick"><select class="sel week-month" aria-label="Mois"></select></span></div>
+      <div class="meta-people">Pour <span class="pick"><select class="sel people-sel" aria-label="Nombre de personnes"></select></span> <span>personne<span class="pl">s</span></span></div>
     </div>
     <div class="days" id="days"></div>
     <p class="sign" data-sign="Bon appétit !"></p>
@@ -246,8 +248,8 @@ textarea.line{display:block;width:100%;resize:none;overflow:hidden;background-re
     <div class="deco" data-deco="courses" aria-hidden="true"></div>
     <h1 class="title">La liste <span>de courses</span></h1>
     <div class="meta">
-      <label class="meta-week"><b>Semaine du</b><input class="line week-input" type="text" autocomplete="off" enterkeyhint="done" placeholder="date"></label>
-      <label class="meta-people">Pour <input class="line people-input" type="text" inputmode="numeric" maxlength="2" enterkeyhint="done" aria-label="Nombre de personnes"> <span>personne<span class="pl">s</span></span></label>
+      <div class="meta-week"><b>Semaine du</b><span class="pick"><select class="sel week-day" aria-label="Jour"></select></span><span class="pick"><select class="sel week-month" aria-label="Mois"></select></span></div>
+      <div class="meta-people">Pour <span class="pick"><select class="sel people-sel" aria-label="Nombre de personnes"></select></span> <span>personne<span class="pl">s</span></span></div>
     </div>
     <div class="toolbar">
       <span class="tally" id="tally"></span>
@@ -304,6 +306,8 @@ var CATS = [
   { id: 'divers',   name: 'Divers',            icon: 'basket' }
 ];
 
+var MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+
 var ICONS = {
   spoon:   '<ellipse cx="12" cy="7.6" rx="4.1" ry="5" fill="currentColor"/><path d="M12 12.6v8.9" stroke-width="2.2"/>',
   carrot:  '<path d="M12.6 7.6c2.8-1.3 5.4 1.3 4 4L6.1 20.4c-.7.6-1.7-.3-1.1-1.1z" fill="currentColor" stroke-width="1.2"/><path d="M15.2 8.8l4.4-4.4M16.1 10.1l4.5-1.1M14 7.4l1.1-4"/>',
@@ -351,6 +355,8 @@ function targetMonday(now) {
   d.setDate(d.getDate() + (wd >= 5 ? 7 - wd : -wd)); // samedi/dimanche : lundi suivant
   return d;
 }
+function weekText() { return (state.weekDay === 1 ? '1er' : state.weekDay) + ' ' + MONTHS[state.weekMonth]; }
+function daysIn(m) { var now = new Date(), y = now.getFullYear(); if (m < now.getMonth() - 6) y++; return new Date(y, m + 1, 0).getDate(); }
 function weekLabel(d) {
   var day = d.getDate();
   return (day === 1 ? '1er' : day) + ' ' + d.toLocaleDateString('fr-FR', { month: 'long' });
@@ -361,8 +367,9 @@ function blankState() {
   var meals = {};
   DAYS.forEach(function (d) { meals[d.id] = { midi: '', soir: '' }; });
   return {
-    v: 1,
-    week: weekLabel(targetMonday(new Date())),
+    v: 2,
+    weekDay: targetMonday(new Date()).getDate(),
+    weekMonth: targetMonday(new Date()).getMonth(),
     people: '4',
     meals: meals,
     items: [],
@@ -372,7 +379,7 @@ function blankState() {
 }
 function seededState() {
   var s = blankState();
-  s.week = '23 novembre';
+  s.weekDay = 23; s.weekMonth = 10;
   var soir = {
     lundi: 'Bœuf bourguignon et purée', mardi: 'Dahl de pois chiches et riz', mercredi: 'Pâtes au pesto et tomates',
     jeudi: 'Lasagnes truite épinards', vendredi: 'Tajine de légumes et semoule', samedi: 'Poulet basquaise et riz', dimanche: 'Loubieh'
@@ -392,8 +399,15 @@ function load() {
   try { raw = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { raw = null; }
   if (!raw || typeof raw !== 'object') return new Date() < SEED_UNTIL ? seededState() : blankState();
   var s = blankState();
-  if (typeof raw.week === 'string') s.week = raw.week;
-  if (raw.people != null) s.people = String(raw.people);
+  var wd = parseInt(raw.weekDay, 10), wm = parseInt(raw.weekMonth, 10);
+  if (wd >= 1 && wd <= 31 && wm >= 0 && wm <= 11) { s.weekDay = wd; s.weekMonth = wm; }
+  else if (typeof raw.week === 'string') {
+    var mt = raw.week.trim().toLowerCase().match(/^(\d{1,2})(?:er)?\s+(\S+)/);
+    var mi = mt ? MONTHS.indexOf(mt[2]) : -1;
+    if (mt && mi >= 0 && +mt[1] >= 1 && +mt[1] <= 31) { s.weekDay = +mt[1]; s.weekMonth = mi; }
+  }
+  var pp = parseInt(raw.people, 10);
+  if (pp >= 1 && pp <= 12) s.people = String(pp);
   if (raw.tab === 'courses') s.tab = 'courses';
   DAYS.forEach(function (d) {
     var m = raw.meals && raw.meals[d.id];
@@ -447,6 +461,15 @@ function buildStatic() {
   $('[data-deco="menu"]').innerHTML = ico('spoon', 'red') + ico('leaf', 'green') + ico('hat', 'ink') + ico('leaf', 'green') + ico('cutlery', 'red');
   $('[data-deco="courses"]').innerHTML = ico('carrot', 'green') + ico('fish', 'red') + ico('basket', 'green') + ico('bottle', 'red') + ico('apple', 'green');
   $$('[data-sign]').forEach(function (p) { p.innerHTML = ico('apple', 'red') + '<span>' + p.getAttribute('data-sign') + '</span>' + ico('leaf', 'green'); });
+
+  var dayOpts = '';
+  for (var i = 1; i <= 31; i++) dayOpts += '<option value="' + i + '">' + (i === 1 ? '1er' : i) + '</option>';
+  $$('.week-day').forEach(function (x) { x.innerHTML = dayOpts; });
+  var monOpts = MONTHS.map(function (m, i) { return '<option value="' + i + '">' + m + '</option>'; }).join('');
+  $$('.week-month').forEach(function (x) { x.innerHTML = monOpts; });
+  var pplOpts = '';
+  for (var p = 1; p <= 12; p++) pplOpts += '<option value="' + p + '">' + p + '</option>';
+  $$('.people-sel').forEach(function (x) { x.innerHTML = pplOpts; });
 
   $('#days').innerHTML = DAYS.map(function (d) {
     return '<article class="day' + (d.id === 'dimanche' ? ' day--sun' : '') + '">' +
@@ -515,8 +538,9 @@ function autosize(el) {
 function autosizeAll() { $$('.field').forEach(autosize); }
 
 function applyState() {
-  $$('.week-input').forEach(function (x) { x.value = state.week; });
-  $$('.people-input').forEach(function (x) { x.value = state.people; });
+  $$('.week-day').forEach(function (x) { x.value = String(state.weekDay); });
+  $$('.week-month').forEach(function (x) { x.value = String(state.weekMonth); });
+  $$('.people-sel').forEach(function (x) { x.value = state.people; });
   updatePlural();
   $$('.field').forEach(function (f) { f.value = state.meals[f.dataset.day][f.dataset.slot]; });
   renderAllCats();
@@ -594,7 +618,7 @@ function shareList() {
     lines.push('');
   });
   if (!lines.length) { toast('Rien à partager : la liste est vide ou tout est coché'); return; }
-  var text = 'Liste de courses' + (state.week ? ' (semaine du ' + state.week + ')' : '') + '\n\n' + lines.join('\n').trim();
+  var text = 'Liste de courses' + ' (semaine du ' + weekText() + ')' + '\n\n' + lines.join('\n').trim();
   if (navigator.share) { navigator.share({ title: 'Liste de courses', text: text }).catch(function () {}); return; }
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).then(function () { toast('Liste copiée, prête à coller'); }, function () { toast('Copie impossible sur ce navigateur'); });
@@ -697,7 +721,7 @@ function openResetSheet() {
       if (act !== 'reset') return;
       var prev = JSON.stringify(state);
       var fresh = blankState();
-      fresh.people = state.people; fresh.print = state.print; fresh.tab = state.tab; fresh.week = next;
+      fresh.people = state.people; fresh.print = state.print; fresh.tab = state.tab;
       state = fresh;
       closeModal(); applyState(); persist(); renderPrint();
       window.scrollTo(0, 0);
@@ -766,7 +790,7 @@ function sheetHTML(title, deco, body, sign) {
   return '<section class="p-sheet"><div class="p-g gingham"><div class="p-frame">' +
     '<div class="p-deco">' + deco + '</div>' +
     '<h1 class="p-title">' + title + '</h1>' +
-    '<div class="p-meta"><b>Semaine du</b><span class="p-week">' + esc(state.week.trim()) + '</span><span class="p-people">' + people + '</span></div>' +
+    '<div class="p-meta"><b>Semaine du</b><span class="p-week">' + esc(weekText()) + '</span><span class="p-people">' + people + '</span></div>' +
     body +
     '<p class="p-sign">' + ico('apple', 'red') + '<span>' + sign + '</span>' + ico('leaf', 'green') + '</p>' +
     '</div></div></section>';
@@ -818,16 +842,6 @@ document.addEventListener('input', function (e) {
     if (/\n/.test(t.value)) t.value = t.value.replace(/\s*\n\s*/g, ' ');
     state.meals[t.dataset.day][t.dataset.slot] = t.value;
     autosize(t); save();
-  } else if (cl.contains('week-input')) {
-    state.week = t.value;
-    $$('.week-input').forEach(function (x) { if (x !== t) x.value = t.value; });
-    save();
-  } else if (cl.contains('people-input')) {
-    var v = t.value.replace(/\D/g, '').slice(0, 2);
-    if (v !== t.value) t.value = v;
-    state.people = v;
-    $$('.people-input').forEach(function (x) { if (x !== t) x.value = v; });
-    updatePlural(); save();
   } else if (cl.contains('item-text')) {
     var it = findItem(t.closest('.item').dataset.id);
     if (it) { it.text = t.value; save(); }
@@ -836,11 +850,29 @@ document.addEventListener('input', function (e) {
   }
 });
 
+document.addEventListener('change', function (e) {
+  var t = e.target, cl = t.classList;
+  if (!cl) return;
+  if (cl.contains('week-day') || cl.contains('week-month')) {
+    if (cl.contains('week-day')) state.weekDay = parseInt(t.value, 10);
+    else state.weekMonth = parseInt(t.value, 10);
+    var max = daysIn(state.weekMonth);
+    if (state.weekDay > max) state.weekDay = max;
+    $$('.week-day').forEach(function (x) { x.value = String(state.weekDay); });
+    $$('.week-month').forEach(function (x) { x.value = String(state.weekMonth); });
+    save();
+  } else if (cl.contains('people-sel')) {
+    state.people = t.value;
+    $$('.people-sel').forEach(function (x) { x.value = t.value; });
+    updatePlural(); save();
+  }
+});
+
 document.addEventListener('keydown', function (e) {
   if (e.key === 'Escape' && !overlay.hidden) { closeModal(); return; }
   if (e.key !== 'Enter' || e.isComposing) return;
   var cl = e.target.classList;
-  if (cl && (cl.contains('field') || cl.contains('item-text') || cl.contains('week-input') || cl.contains('people-input'))) {
+  if (cl && (cl.contains('field') || cl.contains('item-text'))) {
     e.preventDefault(); e.target.blur();
   }
 });
