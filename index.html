@@ -178,7 +178,7 @@ textarea.line{display:block;width:100%;resize:none;overflow:hidden;background-re
 
 /* ===== Feuilles A4 imprimées ===== */
 #print-root{display:none}
-.p-sheet{width:210mm;height:296mm;padding:5mm;overflow:hidden;page-break-after:always;break-after:page;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.p-sheet{width:210mm;height:281mm;padding:9mm 5mm 5mm;overflow:hidden;page-break-after:always;break-after:page;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .p-sheet:last-child{page-break-after:auto;break-after:auto}
 .p-g{height:100%;padding:8mm;background-size:4.6mm 4.6mm}
 .p-frame{height:100%;display:flex;flex-direction:column;background:var(--paper);border:.6mm solid var(--red);border-radius:6mm;padding:6mm 8mm 4.5mm}
@@ -744,7 +744,7 @@ function toast(msg, label, action) {
 /* ---------- Impression ---------- */
 // Répartit la hauteur de la page entre les 3 rangées de catégories, selon le nombre d'articles.
 function planCourses(lists) {
-  var ROWS_MM = 206, OVER = 15.8, MIN = 3;
+  var ROWS_MM = 187, OVER = 15.8, MIN = 3;
   function est(text, cols, dense) {
     var width = cols === 2 ? 27 : 64, cw = dense ? 1.7 : 1.92;
     return Math.max(1, Math.ceil((text.length || 1) * cw / width));
